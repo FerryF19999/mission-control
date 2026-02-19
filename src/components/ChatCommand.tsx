@@ -75,28 +75,41 @@ export default function ChatCommand() {
     setInput("");
     setIsTyping(true);
 
-    // Simulate agent response
-    setTimeout(() => {
-      const responses: Record<string, string> = {
-        jarvis: "I'll optimize the content calendar and prepare the next batch of posts for Threads. Should be ready in about 10 minutes.",
-        friday: "Roger that. I'm on it - will update the Mission Control dashboard with the new features you requested.",
-        glass: "I'll archive the old memory files and optimize the storage. Cleaning up conversations older than 30 days.",
-        epstein: "Starting API integration tests now. I'll run the full test suite and report back with results.",
-        yuri: "Monitoring all agents now. Current status: Jarvis (online), Friday (busy), Glass (idle), Epstein (offline).",
-      };
+    try {
+      // Call the real agent API
+      const response = await fetch(`/api/agent/${selectedAgent.id}/command`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: input }),
+      });
+
+      const data = await response.json();
 
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "agent",
-        content: responses[selectedAgent.id] || "Task acknowledged. Working on it now.",
+        content: data.success ? data.response : `Error: ${data.error || "Failed to get response"}`,
         agent: selectedAgent.name,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         status: "sent",
       };
 
       setMessages((prev) => [...prev, agentMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "agent",
+        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        agent: selectedAgent.name,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        status: "error",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

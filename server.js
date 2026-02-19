@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -9,6 +10,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use(express.static('dist'));
+
+// Gateway token from environment or default
+const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN || '95e6bf5a720765e27e0637b930f2ea6d1854ae85f3efcbd661a7306ce22f2c30';
 
 // API Routes
 
@@ -111,6 +115,133 @@ app.get('/api/tasks', (req, res) => {
   res.json({ tasks });
 });
 
+// Send command to agent via OpenClaw Gateway
+app.post('/api/agent/:agentId/command', async (req, res) => {
+  const { agentId } = req.params;
+  const { message } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  // Map agent IDs to workspace names
+  const agentWorkspaces = {
+    jarvis: 'jarvis',
+    friday: 'friday',
+    glass: 'glass',
+    epstein: 'epstein',
+    yuri: 'yuri'
+  };
+
+  const workspace = agentWorkspaces[agentId.toLowerCase()];
+  if (!workspace) {
+    return res.status(400).json({ error: `Unknown agent: ${agentId}` });
+  }
+
+  try {
+    // Call openclaw CLI to invoke the agent
+    const openclawPath = process.env.OPENCLAW_PATH || 'openclaw';
+    const args = [
+      'invoke',
+      '--agent', workspace,
+      '--message', message,
+      '--token', GATEWAY_TOKEN
+    ];
+
+    console.log(`[Agent API] Invoking ${agentId} with message: ${message.substring(0, 50)}...`);
+
+    const result = await new Promise((resolve, reject) => {
+      const child = spawn(openclawPath, args, {
+        timeout: 120000 // 2 minute timeout
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      child.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      child.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      child.on('close', (code) => {
+        if (code !== 0 && code !== null) {
+          reject(new Error(`Process exited with code ${code}: ${stderr}`));
+        } else {
+          resolve(stdout.trim() || stderr.trim());
+        }
+      });
+
+      child.on('error', (error) => {
+        reject(error);
+      });
+    });
+
+    res.json({
+      success: true,
+      agentId,
+      response: result,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`[Agent API] Error invoking ${agentId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      agentId
+    });
+  }
+});
+
+// Alternative: Use Gateway HTTP API if available
+app.post('/api/agent/:agentId/gateway', async (req, res) => {
+  const { agentId } = req.params;
+  const { message } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  try {
+    const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'http://127.0.0.1:18788';
+
+    const response = await fetch(`${gatewayUrl}/api/v1/invoke`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GATEWAY_TOKEN}`
+      },
+      body: JSON.stringify({
+        agent: agentId,
+        message: message
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gateway returned ${response.status}: ${await response.text()}`);
+    }
+
+    const data = await response.json();
+    res.json({
+      success: true,
+      agentId,
+      response: data.response || data,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`[Agent API] Gateway error for ${agentId}:`, error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      agentId
+    });
+  }
+});
+
 // Catch-all for SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
@@ -124,4 +255,5 @@ app.listen(PORT, () => {
   console.log(`   - GET /api/cron`);
   console.log(`   - GET /api/memory`);
   console.log(`   - GET /api/tasks`);
+  console.log(`   - POST /api/agent/:agentId/command - Send command to real agent`);
 });
