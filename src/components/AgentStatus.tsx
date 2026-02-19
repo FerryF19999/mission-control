@@ -10,84 +10,66 @@ import {
   Wifi,
   WifiOff
 } from "lucide-react";
-
-interface Agent {
-  id: string;
-  name: string;
-  status: "online" | "busy" | "idle" | "offline";
-  currentTask?: string;
-  lastActive: string;
-  avatar: string;
-  color: string;
-}
+import {
+  initGatewayClient,
+  closeGatewayClient,
+  defaultAgents,
+  GatewayAgent,
+} from "@/lib/openclaw/gateway-client";
 
 interface AgentStatusProps {
   compact?: boolean;
 }
 
-const agentsData: Agent[] = [
-  {
-    id: "jarvis",
-    name: "Jarvis",
-    status: "online",
-    currentTask: "Content optimization",
-    lastActive: "2 min ago",
-    avatar: "J",
-    color: "from-purple-600 to-indigo-600",
-  },
-  {
-    id: "friday",
-    name: "Friday",
-    status: "busy",
-    currentTask: "Building Mission Control",
-    lastActive: "Active now",
-    avatar: "F",
-    color: "from-blue-600 to-cyan-600",
-  },
-  {
-    id: "glass",
-    name: "Glass",
-    status: "idle",
-    lastActive: "1 hour ago",
-    avatar: "G",
-    color: "from-emerald-600 to-teal-600",
-  },
-  {
-    id: "epstein",
-    name: "Epstein",
-    status: "offline",
-    lastActive: "3 hours ago",
-    avatar: "E",
-    color: "from-orange-600 to-amber-600",
-  },
-  {
-    id: "yuri",
-    name: "Yuri",
-    status: "online",
-    currentTask: "Monitoring agents",
-    lastActive: "5 min ago",
-    avatar: "Y",
-    color: "from-rose-600 to-pink-600",
-  },
-];
-
 export default function AgentStatus({ compact = false }: AgentStatusProps) {
-  const [agents, setAgents] = useState<Agent[]>(agentsData);
+  const [agents, setAgents] = useState<GatewayAgent[]>(defaultAgents);
+  const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected">("disconnected");
 
   useEffect(() => {
-    // Simulate real-time updates
-    const interval = setInterval(() => {
+    const wsUrl = process.env.NEXT_PUBLIC_OPENCLAW_GATEWAY_URL || "ws://127.0.0.1:18789";
+    const token = process.env.NEXT_PUBLIC_OPENCLAW_GATEWAY_TOKEN || "";
+
+    const gateway = initGatewayClient(wsUrl, token);
+
+    // Set up event handlers
+    const unsubConnected = gateway.on("connected", () => {
+      setConnectionStatus("connected");
+      gateway.requestAgents();
+    });
+
+    const unsubDisconnected = gateway.on("disconnected", () => {
+      setConnectionStatus("disconnected");
+    });
+
+    const unsubAgentStatus = gateway.on("agent.status", (event) => {
+      const agentUpdate = event.data as GatewayAgent;
       setAgents((prev) =>
-        prev.map((agent) => ({
-          ...agent,
-          status: Math.random() > 0.8 
-            ? (["online", "busy", "idle", "offline"] as const)[Math.floor(Math.random() * 4)]
-            : agent.status,
-        }))
+        prev.map((a) => (a.id === agentUpdate.id ? { ...a, ...agentUpdate } : a))
       );
+    });
+
+    // Also simulate some updates when not connected to real gateway
+    const simulationInterval = setInterval(() => {
+      if (connectionStatus === "disconnected") {
+        setAgents((prev) =>
+          prev.map((agent) => ({
+            ...agent,
+            status: Math.random() > 0.7
+              ? (["online", "busy", "idle", "offline"] as const)[Math.floor(Math.random() * 4)]
+              : agent.status,
+            lastActive: agent.status === "busy" ? "Active now" : agent.lastActive,
+          }))
+        );
+      }
     }, 10000);
-    return () => clearInterval(interval);
-  }, []);
+
+    return () => {
+      unsubConnected();
+      unsubDisconnected();
+      unsubAgentStatus();
+      clearInterval(simulationInterval);
+    };
+  }, [connectionStatus]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -123,9 +105,16 @@ export default function AgentStatus({ compact = false }: AgentStatusProps) {
             <Bot className="w-5 h-5 text-blue-400" />
             <h2 className="text-lg font-semibold text-slate-100">Agent Status</h2>
           </div>
-          <span className="text-xs text-slate-500">
-            {agents.filter((a) => a.status !== "offline").length}/{agents.length} Active
-          </span>
+          <div className="flex items-center gap-2">
+            {connectionStatus === "connected" ? (
+              <Wifi className="w-4 h-4 text-emerald-400" />
+            ) : (
+              <WifiOff className="w-4 h-4 text-slate-500" />
+            )}
+            <span className="text-xs text-slate-500">
+              {agents.filter((a) => a.status !== "offline").length}/{agents.length} Active
+            </span>
+          </div>
         </div>
         <div className="space-y-3">
           {agents.slice(0, 4).map((agent) => (

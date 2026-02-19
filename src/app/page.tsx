@@ -9,15 +9,17 @@ import {
   MessageSquare, 
   Menu,
   X,
-  Zap
+  Zap,
+  Radio
 } from "lucide-react";
 import AgentStatus from "@/components/AgentStatus";
 import TasksBoard from "@/components/TasksBoard";
 import CalendarView from "@/components/CalendarView";
 import MemoryView from "@/components/MemoryView";
 import ChatCommand from "@/components/ChatCommand";
+import RealtimeStatus from "@/components/RealtimeStatus";
 
-type Tab = "dashboard" | "tasks" | "calendar" | "memory" | "chat";
+type Tab = "dashboard" | "tasks" | "calendar" | "memory" | "chat" | "realtime";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
@@ -31,6 +33,7 @@ export default function Home() {
 
   const tabs = [
     { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard },
+    { id: "realtime" as Tab, label: "Realtime", icon: Radio },
     { id: "tasks" as Tab, label: "Tasks Board", icon: Zap },
     { id: "calendar" as Tab, label: "Calendar", icon: Calendar },
     { id: "memory" as Tab, label: "Memory", icon: Brain },
@@ -43,12 +46,12 @@ export default function Home() {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <RealtimeStatus compact />
               <AgentStatus compact />
-              <TasksBoard compact />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <TasksBoard compact />
               <CalendarView compact />
-              <MemoryView compact />
             </div>
           </div>
         );
@@ -60,6 +63,8 @@ export default function Home() {
         return <MemoryView />;
       case "chat":
         return <ChatCommand />;
+      case "realtime":
+        return <RealtimeStatus />;
       default:
         return null;
     }
