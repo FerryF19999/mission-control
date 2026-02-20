@@ -1,10 +1,8 @@
 'use client';
 
-
 export default function Home() {
   const events = [];
 
-export default function Home() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0a0a0a', color: 'white' }}>
       <aside style={{ width: '16rem', background: '#111', borderRight: '1px solid #2a2a2a', padding: '1rem', position: 'fixed', height: '100vh' }}>
