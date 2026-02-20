@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { openclawApi } from '../lib/openclaw';
+import { openclawApi } from '../../lib/openclaw';
 
 const AGENTS = [
   { id: 'jarvis', name: 'Jarvis', role: 'Social Media', emoji: '🎯' },
