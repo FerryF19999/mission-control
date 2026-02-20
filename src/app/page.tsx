@@ -1,3 +1,11 @@
+'use client';
+
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+
+export default function Home() {
+  const events = useQuery(api.events.list);
+
 export default function Home() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0a0a0a', color: 'white' }}>
