@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mission Control - Chat</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: white; min-height: 100vh; display: flex; }
+    .sidebar { width: 200px; background: #111; padding: 20px; border-right: 1px solid #333; }
+    .sidebar h3 { font-size: 14px; color: #888; margin-bottom: 12px; }
+    .agent-btn { width: 100%; display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 8px; border: none; background: transparent; color: #888; cursor: pointer; margin-bottom: 4px; text-align: left; font-size: 14px; }
+    .agent-btn:hover { background: #222; }
+    .agent-btn.active { background: #222; color: white; }
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .header { padding: 20px; border-bottom: 1px solid #333; }
+    .header h2 { font-size: 18px; font-weight: 600; }
+    .header p { font-size: 14px; color: #666; margin-top: 4px; }
+    .messages { flex: 1; padding: 20px; overflow-y: auto; }
+    .message { max-width: 70%; padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; }
+    .message.user { background: #222; margin-left: auto; }
+    .message.agent { background: #333; }
+    .typing { color: #888; font-size: 14px; padding: 12px; }
+    .input-area { padding: 20px; border-top: 1px solid #333; display: flex; gap: 8px; }
+    .input-area input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #111; color: white; font-size: 14px; }
+    .input-area button { padding: 12px 24px; border-radius: 8px; border: none; background: #dc2626; color: white; cursor: pointer; }
+    .input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <h3>AGENTS</h3>
+    <button class="agent-btn active" onclick="selectAgent('jarvis', '🎯', 'Jarvis', 'Social Media')">
+      <span>🎯</span> Jarvis
+    </button>
+    <button class="agent-btn" onclick="selectAgent('friday', '💻', 'Friday', 'Developer/CTO')">
+      <span>💻</span> Friday
+    </button>
+    <button class="agent-btn" onclick="selectAgent('glass', '🔬', 'Glass', 'Researcher')">
+      <span>🔬</span> Glass
+    </button>
+    <button class="agent-btn" onclick="selectAgent('epstein', '🔍', 'Epstein', 'SEO')">
+      <span>🔍</span> Epstein
+    </button>
+    <button class="agent-btn" onclick="selectAgent('yuri', '🦞', 'Yuri', 'General')">
+      <span>🦞</span> Yuri
+    </button>
+  </aside>
+  
+  <main class="main">
+    <div class="header">
+      <h2 id="agentTitle">🎯 Chat dengan Jarvis</h2>
+      <p id="agentRole">Social Media</p>
+    </div>
+    
+    <div class="messages" id="messages">
+      <p style="color:#666;text-align:center;margin-top:40px;">Pilih agent dan mulai chat!</p>
+    </div>
+    
+    <div class="input-area">
+      <input type="text" id="msgInput" placeholder="Ketik pesan..." onkeypress="if(event.key==='Enter')sendMessage()">
+      <button onclick="sendMessage()" id="sendBtn">Kirim</button>
+    </div>
+  </main>
+
+  <script>
+    let currentAgent = { id: 'jarvis', emoji: '🎯', name: 'Jarvis', role: 'Social Media' };
+    
+    const GREETINGS = {
+      jarvis: "Hey! Jarvis here. Social media specialist. Apa yang kamu butuhin?",
+      friday: "Hi! Friday here. Ready to help dengan coding atau tech stuff.",
+      glass: "Glass here. Need research? Aku bisa bantu!",
+      epstein: "Epstein here. SEO expert. Lets ranking naik!",
+      yuri: "Yuri here! Ada yang bisa aku bantu?"
+    };
+
+    function selectAgent(id, emoji, name, role) {
+      currentAgent = { id, emoji, name, role };
+      document.getElementById('agentTitle').textContent = emoji + ' Chat dengan ' + name;
+      document.getElementById('agentRole').textContent = role;
+      document.getElementById('messages').innerHTML = '<p style="color:#666;text-align:center;margin-top:40px;">Pilih agent dan mulai chat!</p>';
+      document.querySelectorAll('.agent-btn').forEach(b => b.classList.remove('active'));
+      event.target.closest('.agent-btn').classList.add('active');
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('msgInput');
+      const btn = document.getElementById('sendBtn');
+      const msg = input.value.trim();
+      if (!msg) return;
+      
+      const messages = document.getElementById('messages');
+      messages.innerHTML += '<div class="message user"><p>' + msg + '</p></div>';
+      input.value = '';
+      btn.disabled = true;
+      
+      messages.innerHTML += '<div class="typing" id="typing">Mengetik...</div>';
+      messages.scrollTop = messages.scrollHeight;
+      
+      // Demo response
+      setTimeout(() => {
+        document.getElementById('typing').remove();
+        messages.innerHTML += '<div class="message agent"><p>' + GREETINGS[currentAgent.id] + '</p></div>';
+        messages.scrollTop = messages.scrollHeight;
+        btn.disabled = false;
+      }, 1500);
+    }
+  </script>
+</body>
+</html>

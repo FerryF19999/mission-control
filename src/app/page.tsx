@@ -1,11 +1,4 @@
-'use client';
-
-import { useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
-
 export default function Home() {
-  const events = useQuery(api.events.list);
-
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0a0a0a', color: 'white' }}>
       <aside style={{ width: '16rem', background: '#111', borderRight: '1px solid #2a2a2a', padding: '1rem', position: 'fixed', height: '100vh' }}>
@@ -76,38 +69,6 @@ export default function Home() {
               <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Access semua context</div>
             </a>
           </div>
-        </div>
-
-        {/* Activity Log Section */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>🧠 Activity Log</h2>
-          {events === undefined ? (
-            <div style={{ color: '#6b7280', padding: '2rem', textAlign: 'center' }}>Loading...</div>
-          ) : events.length === 0 ? (
-            <div style={{ color: '#6b7280', padding: '2rem', textAlign: 'center' }}>No events yet. Send a message to OpenClaw!</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {events.slice(0, 10).map((event) => (
-                <div key={event._id} style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '0.5rem', padding: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                      {new Date(event.createdAt).toLocaleString()}
-                    </span>
-                    <span style={{ fontWeight: 600, color: '#4ade80' }}>{event.action}</span>
-                    {event.source && (
-                      <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>via {event.source}</span>
-                    )}
-                  </div>
-                  {event.prompt && (
-                    <div style={{ color: '#d1d5db', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{event.prompt}</div>
-                  )}
-                  {event.response && (
-                    <div style={{ color: '#6b7280', fontSize: '0.8rem', fontStyle: 'italic' }}>{event.response}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </main>
     </div>
