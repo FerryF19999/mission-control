@@ -1,158 +1,115 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  Brain, 
-  Bot, 
-  MessageSquare, 
-  Menu,
-  X,
-  Zap
-} from "lucide-react";
-import AgentStatus from "@/components/AgentStatus";
-import TasksBoard from "@/components/TasksBoard";
-import CalendarView from "@/components/CalendarView";
-import MemoryView from "@/components/MemoryView";
-import ChatCommand from "@/components/ChatCommand";
-
-type Tab = "dashboard" | "tasks" | "calendar" | "memory" | "chat";
-
-export default function Home() {
-  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const tabs = [
-    { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard },
-    { id: "tasks" as Tab, label: "Tasks Board", icon: Zap },
-    { id: "calendar" as Tab, label: "Calendar", icon: Calendar },
-    { id: "memory" as Tab, label: "Memory", icon: Brain },
-    { id: "chat" as Tab, label: "Command", icon: MessageSquare },
-  ];
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AgentStatus compact />
-              <TasksBoard compact />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <CalendarView compact />
-              <MemoryView compact />
-            </div>
-          </div>
-        );
-      case "tasks":
-        return <TasksBoard />;
-      case "calendar":
-        return <CalendarView />;
-      case "memory":
-        return <MemoryView />;
-      case "chat":
-        return <ChatCommand />;
-      default:
-        return null;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mission Control</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a; 
+      color: white;
     }
-  };
-
-  return (
-    <div className="flex h-screen bg-slate-950">
-      {/* Sidebar */}
-      <aside
-        className={`${
-          sidebarOpen ? "w-64" : "w-16"
-        } bg-slate-900 border-r border-slate-800 transition-all duration-300 flex flex-col`}
-      >
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-center border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Bot className="w-5 h-5 text-white" />
-            </div>
-            {sidebarOpen && (
-              <span className="font-bold text-lg bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                OpenClaw
-              </span>
-            )}
-          </div>
+    .app { display: flex; min-height: 100vh; }
+    .sidebar { 
+      width: 16rem; 
+      background: #111; 
+      border-right: 1px solid #2a2a2a;
+      padding: 1rem;
+    }
+    .logo { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border-bottom: 1px solid #2a2a2a; }
+    .logo-icon { width: 2.5rem; height: 2.5rem; background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; }
+    .nav { padding: 0.75rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; border-radius: 0.5rem; color: #9ca3af; text-decoration: none; margin-bottom: 0.25rem; }
+    .nav-item:hover { background: rgba(255,255,255,0.05); }
+    .nav-item.active { background: #1f2937; color: white; }
+    .main { flex: 1; padding: 1.5rem; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 1.875rem; font-weight: 700; }
+    .status { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #111; border-radius: 9999px; font-size: 0.875rem; }
+    .status-dot { width: 0.5rem; height: 0.5rem; background: #22c55e; border-radius: 50%; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 0.75rem; padding: 1.25rem; }
+    .card-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+    .card-value { font-size: 1.875rem; font-weight: 700; }
+    .card-label { font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem; }
+    .section { margin-bottom: 2rem; }
+    .section-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon"><span style="font-size:1.25rem">🚀</span></div>
+        <div>
+          <div style="font-weight:700;font-size:1.125rem">Mission Control</div>
+          <div style="font-size:0.75rem;color:#6b7280">OpenClaw Hub</div>
         </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                activeTab === tab.id
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-600/30"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-              }`}
-            >
-              <tab.icon className="w-5 h-5 flex-shrink-0" />
-              {sidebarOpen && <span className="font-medium">{tab.label}</span>}
-            </button>
-          ))}
-        </nav>
-
-        {/* Toggle Button */}
-        <div className="p-3 border-t border-slate-800">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="w-full flex items-center justify-center p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
-          >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+      </div>
+      <nav class="nav">
+        <a href="/chat" class="nav-item">🤖 Chat</a>
+        <a href="/tasks" class="nav-item">📋 Tasks</a>
+        <a href="/memory" class="nav-item">🧠 Memory</a>
+        <a href="/team" class="nav-item">👥 Team</a>
+        <a href="/content" class="nav-item">📝 Content</a>
+        <a href="/calendar" class="nav-item">📅 Calendar</a>
+      </nav>
+    </aside>
+    <main class="main">
+      <div class="header">
+        <h1>Welcome to Mission Control 🚀</h1>
+        <div class="status">
+          <div class="status-dot"></div>
+          <span>4/5 Agents Active</span>
         </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-16 bg-slate-900/50 border-b border-slate-800 flex items-center justify-between px-6">
-          <div>
-            <h1 className="text-xl font-semibold text-slate-100">
-              {tabs.find((t) => t.id === activeTab)?.label || "Dashboard"}
-            </h1>
-            <p className="text-xs text-slate-500">
-              Mission Control Center
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm font-mono text-slate-300">
-                {currentTime.toLocaleTimeString()}
-              </p>
-              <p className="text-xs text-slate-500">
-                {currentTime.toLocaleDateString(undefined, {
-                  weekday: "short",
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center">
-              <span className="text-sm font-bold text-white">FF</span>
-            </div>
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <div className="flex-1 overflow-auto p-6">
-          {renderContent()}
+      </div>
+      
+      <div class="grid">
+        <div class="card">
+          <div class="card-icon" style="background: linear-gradient(135deg, #06b6d4, #3b82f6)">🤖</div>
+          <div class="card-value">5</div>
+          <div class="card-label">Active Agents</div>
         </div>
-      </main>
-    </div>
-  );
-}
+        <div class="card">
+          <div class="card-icon" style="background: linear-gradient(135deg, #8b5cf6, #ec4899)">📋</div>
+          <div class="card-value">12</div>
+          <div class="card-label">Tasks Today</div>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316)">🧠</div>
+          <div class="card-value">48</div>
+          <div class="card-label">Memories</div>
+        </div>
+        <div class="card">
+          <div class="card-icon" style="background: linear-gradient(135deg, #22c55e, #10b981)">📅</div>
+          <div class="card-value">8</div>
+          <div class="card-label">Scheduled</div>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h2 class="section-title">Quick Actions</h2>
+        <div class="grid">
+          <a href="/chat" class="card" style="display:block;text-decoration:none;color:inherit">
+            <div class="card-icon" style="background: linear-gradient(135deg, #8b5cf6, #ec4899)">💬</div>
+            <div style="font-weight:600;margin-bottom:0.25rem">Chat dengan Agents</div>
+            <div style="font-size:0.875rem;color:#6b7280"> Jarvis, Friday, Glass, Epstein</div>
+          </a>
+          <a href="/team" class="card" style="display:block;text-decoration:none;color:inherit">
+            <div class="card-icon" style="background: linear-gradient(135deg, #06b6d4, #3b82f6)">👥</div>
+            <div style="font-weight:600;margin-bottom:0.25rem">Kelola Team</div>
+            <div style="font-size:0.875rem;color:#6b7280">Lihat & manage agents</div>
+          </a>
+          <a href="/memory" class="card" style="display:block;text-decoration:none;color:inherit">
+            <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316)">🧠</div>
+            <div style="font-weight:600;margin-bottom:0.25rem">Memory</div>
+            <div style="font-size:0.875rem;color:#6b7280">Access semua context</div>
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
